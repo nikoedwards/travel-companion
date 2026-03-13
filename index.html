@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>本地耳语 - 旅行伴侣</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+</head>
+<body>
+  <!-- Session Drawer -->
+  <div id="drawer" class="drawer">
+    <div class="drawer-header">
+      <h2>对话历史</h2>
+      <button id="new-session-btn" class="btn-primary">+ 新对话</button>
+    </div>
+    <div id="session-list" class="session-list"></div>
+  </div>
+
+  <!-- Overlay for drawer -->
+  <div id="drawer-overlay" class="drawer-overlay"></div>
+
+  <!-- Main App Container -->
+  <div id="app" class="app-container">
+
+    <!-- Chat Tab -->
+    <div id="tab-chat" class="tab-content active">
+      <div class="chat-header">
+        <button id="menu-btn" class="icon-btn">☰</button>
+        <h1 id="session-title">本地耳语</h1>
+        <button id="passive-toggle-btn" class="passive-toggle on" title="主动推送">推送 开</button>
+      </div>
+
+      <div id="message-list" class="message-list"></div>
+
+      <div class="input-bar">
+        <textarea id="message-input" placeholder="问问周围有什么有趣的..." rows="1"></textarea>
+        <button id="send-btn" class="btn-send">发送</button>
+      </div>
+
+      <!-- Mini Map (floating) -->
+      <div id="mini-map-container" class="mini-map-container">
+        <div id="mini-map"></div>
+      </div>
+    </div>
+
+    <!-- Map Tab -->
+    <div id="tab-map" class="tab-content">
+      <div id="google-map" class="full-map"></div>
+
+      <!-- AI Bubble (floating) -->
+      <div id="ai-bubble" class="ai-bubble hidden">
+        <button class="bubble-close">×</button>
+        <div class="bubble-content"></div>
+      </div>
+    </div>
+
+    <!-- Bottom Tab Bar -->
+    <div class="tab-bar">
+      <button id="tab-btn-chat" class="tab-btn active">
+        <span class="tab-icon">💬</span>
+        <span class="tab-label">对话</span>
+      </button>
+      <button id="tab-btn-map" class="tab-btn">
+        <span class="tab-icon">🗺️</span>
+        <span class="tab-label">地图</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Debug Console -->
+  <div id="debug-console">
+    <div class="debug-drag-handle">
+      <span class="debug-title">调试信息</span>
+      <button id="debug-toggle-btn" class="debug-toggle on">●</button>
+    </div>
+    <div class="debug-content">
+      <div class="debug-row"><span class="debug-label">坐标</span><span id="dbg-coords">—</span></div>
+      <div class="debug-row"><span class="debug-label">精度</span><span id="dbg-acc">—</span></div>
+      <div class="debug-row"><span class="debug-label">更新于</span><span id="dbg-time">—</span></div>
+      <div class="debug-row"><span class="debug-label">已过</span><span id="dbg-elapsed">—</span></div>
+      <button id="explore-btn" class="debug-explore-btn">🔍 探索周围</button>
+    </div>
+  </div>
+
+  <!-- Load Leaflet -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- Load modules -->
+  <script type="module" src="app.js"></script>
+</body>
+</html>
