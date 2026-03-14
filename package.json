@@ -7,6 +7,7 @@
     "dev": "node server.js"
   },
   "dependencies": {
-    "@coze/api": "^1.0.0"
+    "@coze/api": "^1.0.0",
+    "dotenv": "^16.0.0"
   }
 }

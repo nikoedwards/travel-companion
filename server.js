@@ -1,14 +1,20 @@
 // server.js - 代理服务器，转发 Coze API 请求
 // 使用 Coze 官方 SDK
 
+import 'dotenv/config';
 import http from 'http';
 import { CozeAPI } from '@coze/api';
 
 const PORT = 3001;
 
-// Coze API 配置
-const TOKEN = 'pat_84926s9d2AbWBxbfMVwEGqvGM3iP0urjojKyaAyQUD2EkdfAVJPCtSn8vYVyketI';
-const WORKFLOW_ID = '7616752869026398250';
+// Coze API 配置（从环境变量读取）
+const TOKEN = process.env.COZE_TOKEN;
+const WORKFLOW_ID = process.env.COZE_WORKFLOW_ID || '7616752869026398250';
+
+if (!TOKEN) {
+  console.error('请设置 COZE_TOKEN 环境变量');
+  process.exit(1);
+}
 
 // 创建 Coze 客户端
 const apiClient = new CozeAPI({

@@ -43,12 +43,24 @@ npm start
 
 ## 配置说明
 
-在 `server.js` 中配置 Coze API：
+### 本地开发
 
-```javascript
-const TOKEN = 'your-coze-token';
-const WORKFLOW_ID = 'your-workflow-id';
+1. 复制环境变量配置文件：
+```bash
+cp .env.example .env
 ```
+
+2. 编辑 `.env` 文件，填入你的 Coze API token：
+```
+COZE_TOKEN=你的token
+COZE_WORKFLOW_ID=7616752869026398250
+```
+
+### Vercel 部署
+
+在 Vercel 项目设置中添加环境变量：
+- `COZE_TOKEN`: 你的 Coze API token
+- `COZE_WORKFLOW_ID`: 工作流 ID（可选，默认 7616752869026398250）
 
 ## 项目结构
 
