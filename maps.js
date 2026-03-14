@@ -64,6 +64,9 @@ export const MapsModule = {
 
     this.appState.set('miniMapInstance', { map: miniMap, marker: miniMarker });
 
+    // Make mini map draggable
+    this.makeDraggable(miniMap);
+
     // Listen to location updates
     this.appState.on('location', (location) => this.updateMapLocation(location));
   },
@@ -140,5 +143,47 @@ export const MapsModule = {
       navigator.geolocation.clearWatch(this.watchId);
       this.watchId = null;
     }
+  },
+
+  makeDraggable(miniMap) {
+    const container = document.getElementById('mini-map-container');
+    if (!container) return;
+
+    let isDragging = false;
+    let startX, startY, initialLeft, initialTop;
+
+    const onMouseDown = (e) => {
+      isDragging = true;
+      startX = e.clientX || e.touches?.[0]?.clientX;
+      startY = e.clientY || e.touches?.[0]?.clientY;
+      const rect = container.getBoundingClientRect();
+      initialLeft = rect.left;
+      initialTop = rect.top;
+      container.style.cursor = 'grabbing';
+    };
+
+    const onMouseMove = (e) => {
+      if (!isDragging) return;
+      const clientX = e.clientX || e.touches?.[0]?.clientX;
+      const clientY = e.clientY || e.touches?.[0]?.clientY;
+      const dx = clientX - startX;
+      const dy = clientY - startY;
+      container.style.left = `${initialLeft + dx}px`;
+      container.style.top = `${initialTop + dy}px`;
+      container.style.right = 'auto';
+      container.style.bottom = 'auto';
+    };
+
+    const onMouseUp = () => {
+      isDragging = false;
+      container.style.cursor = 'move';
+    };
+
+    container.addEventListener('mousedown', onMouseDown);
+    container.addEventListener('touchstart', onMouseDown);
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('touchmove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+    document.addEventListener('touchend', onMouseUp);
   }
 };

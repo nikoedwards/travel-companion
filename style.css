@@ -237,6 +237,8 @@ body {
   box-shadow: 0 2px 8px rgba(0,0,0,0.2);
   border: 2px solid white;
   z-index: 100;
+  cursor: move;
+  touch-action: none;
 }
 
 #mini-map {
