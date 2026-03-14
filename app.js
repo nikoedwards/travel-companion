@@ -293,8 +293,12 @@ function initDebugConsole(appState) {
       const coords = `(${location.lat}, ${location.lng})`;
       console.log('探索坐标:', coords);
 
-      // 调用本地代理服务器
-      const response = await fetch('http://localhost:3001/api/explore', {
+      // Use relative API URL (works both locally and on Vercel)
+      const apiUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        ? 'http://localhost:3001/api/explore'
+        : '/api/explore';
+
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
