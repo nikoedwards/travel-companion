@@ -137,8 +137,7 @@ async function init() {
     ChatModule.renderMessages();
   }
 
-  // Start passive scanner
-  PassiveScanner.start();
+  // Passive scanner starts disabled, user can toggle on
 }
 
 // ─── Debug Console ────────────────────────────────────────────────────────────
@@ -176,16 +175,194 @@ function initDebugConsole(appState) {
     const isOn = toggleBtn.classList.contains('on');
     if (isOn) {
       window.PassiveScanner.stop();
-      toggleBtn.textContent = '推送 关';
+      toggleBtn.textContent = '陪伴模式 关闭';
       toggleBtn.classList.remove('on');
       toggleBtn.classList.add('off');
     } else {
       window.PassiveScanner.start();
-      toggleBtn.textContent = '推送 开';
+      toggleBtn.textContent = '陪伴模式 开启';
       toggleBtn.classList.remove('off');
       toggleBtn.classList.add('on');
     }
   });
+
+  // ─── CityWalk 模拟 ─────────────────────────────────────────────────────
+  const citywalk = {
+    isRunning: false,
+    isPaused: false,
+    timer: null,
+    speed: 1.0, // m/s
+    direction: 'random',
+    currentAngle: 0,
+    startLat: null,
+    startLng: null,
+
+    // 北京中心作为默认起点
+    defaultLat: 39.9042,
+    defaultLng: 116.4074,
+
+    init() {
+      const currentLoc = appState.get('location');
+      if (currentLoc?.lat && currentLoc?.lng) {
+        this.startLat = currentLoc.lat;
+        this.startLng = currentLoc.lng;
+      } else {
+        this.startLat = this.defaultLat;
+        this.startLng = this.defaultLng;
+      }
+
+      this.bindEvents();
+    },
+
+    bindEvents() {
+      const speedSlider = document.getElementById('cw-speed-slider');
+      const speedValue = document.getElementById('cw-speed-value');
+      const directionSelect = document.getElementById('cw-direction');
+      const startBtn = document.getElementById('cw-start-btn');
+      const pauseBtn = document.getElementById('cw-pause-btn');
+      const stopBtn = document.getElementById('cw-stop-btn');
+
+      // 速度滑块
+      speedSlider.addEventListener('input', () => {
+        const value = parseFloat(speedSlider.value);
+        this.speed = value;
+        speedValue.textContent = value.toFixed(1);
+
+        // 运行时实时更新状态栏
+        if (this.isRunning && !this.isPaused) {
+          const statusEl = document.getElementById('cw-status');
+          statusEl.textContent = `运行中 ${value.toFixed(1)} m/s`;
+        }
+      });
+
+      // 方向选择
+      directionSelect.addEventListener('change', () => {
+        this.direction = directionSelect.value;
+      });
+
+      // 开始
+      startBtn.addEventListener('click', () => this.start());
+
+      // 暂停
+      pauseBtn.addEventListener('click', () => this.pause());
+
+      // 停止
+      stopBtn.addEventListener('click', () => this.stop());
+    },
+
+    start() {
+      if (this.isRunning && !this.isPaused) return;
+
+      if (this.isPaused) {
+        // 恢复
+        this.isPaused = false;
+      } else {
+        // 全新开始
+        const currentLoc = appState.get('location');
+        if (currentLoc?.lat && currentLoc?.lng) {
+          this.startLat = currentLoc.lat;
+          this.startLng = currentLoc.lng;
+        } else {
+          this.startLat = this.defaultLat;
+          this.startLng = this.defaultLng;
+        }
+
+        // 设置初始角度
+        if (this.direction === 'random') {
+          this.currentAngle = Math.random() * 360;
+        } else {
+          const dirs = { north: 0, south: 180, east: 90, west: 270 };
+          this.currentAngle = dirs[this.direction] || 0;
+        }
+      }
+
+      this.isRunning = true;
+      this.updateUI();
+
+      // 每秒更新一次位置
+      this.timer = setInterval(() => this.tick(), 1000);
+    },
+
+    pause() {
+      if (!this.isRunning) return;
+      this.isPaused = true;
+      if (this.timer) {
+        clearInterval(this.timer);
+        this.timer = null;
+      }
+      this.updateUI();
+    },
+
+    stop() {
+      this.isRunning = false;
+      this.isPaused = false;
+      if (this.timer) {
+        clearInterval(this.timer);
+        this.timer = null;
+      }
+      this.updateUI();
+    },
+
+    tick() {
+      if (this.speed === 0) return;
+
+      // 每秒移动的距离 (大约)
+      const metersPerSecond = this.speed;
+      const latChange = metersPerSecond / 111320 * Math.cos(this.currentAngle * Math.PI / 180);
+      const lngChange = metersPerSecond / 111320 * Math.sin(this.currentAngle * Math.PI / 180);
+
+      const newLat = this.startLat + latChange;
+      const newLng = this.startLng + lngChange;
+
+      this.startLat = newLat;
+      this.startLng = newLng;
+
+      // 更新位置
+      const newLocation = {
+        lat: newLat,
+        lng: newLng,
+        accuracy: 10,
+        last_updated: Date.now(),
+        isSimulated: true
+      };
+
+      appState.set('location', newLocation);
+    },
+
+    updateUI() {
+      const statusEl = document.getElementById('cw-status');
+      const speedValueEl = document.getElementById('cw-speed-value');
+      const startBtn = document.getElementById('cw-start-btn');
+      const pauseBtn = document.getElementById('cw-pause-btn');
+      const stopBtn = document.getElementById('cw-stop-btn');
+
+      // 更新速度显示
+      speedValueEl.textContent = this.speed.toFixed(1);
+
+      if (!this.isRunning) {
+        statusEl.textContent = '已停止';
+        statusEl.className = '';
+        startBtn.disabled = false;
+        pauseBtn.disabled = true;
+        stopBtn.disabled = true;
+      } else if (this.isPaused) {
+        statusEl.textContent = `已暂停 (${this.speed.toFixed(1)} m/s)`;
+        statusEl.className = 'paused';
+        startBtn.disabled = false;
+        pauseBtn.disabled = true;
+        stopBtn.disabled = false;
+      } else {
+        statusEl.textContent = `运行中 ${this.speed}m/s`;
+        statusEl.className = 'running';
+        startBtn.disabled = true;
+        pauseBtn.disabled = false;
+        stopBtn.disabled = false;
+      }
+    }
+  };
+
+  // 初始化 CityWalk
+  citywalk.init();
 
   // ─── Draggable Console ─────────────────────────────────────────────────────
   const consoleEl = document.getElementById('debug-console');

@@ -30,12 +30,13 @@
       <div class="chat-header">
         <button id="menu-btn" class="icon-btn">☰</button>
         <h1 id="session-title">本地耳语</h1>
-        <button id="passive-toggle-btn" class="passive-toggle on" title="主动推送">推送 开</button>
+        <button id="passive-toggle-btn" class="passive-toggle off" title="陪伴模式">陪伴模式 关闭</button>
       </div>
 
       <div id="message-list" class="message-list"></div>
 
       <div class="input-bar">
+        <button id="voice-btn" class="btn-voice" title="语音输入">🎤</button>
         <textarea id="message-input" placeholder="问问周围有什么有趣的..." rows="1"></textarea>
         <button id="send-btn" class="btn-send">发送</button>
       </div>
@@ -82,6 +83,35 @@
       <div class="debug-row"><span class="debug-label">更新于</span><span id="dbg-time">—</span></div>
       <div class="debug-row"><span class="debug-label">已过</span><span id="dbg-elapsed">—</span></div>
       <button id="explore-btn" class="debug-explore-btn">🔍 探索周围</button>
+
+      <!-- CityWalk 模拟 -->
+      <div class="debug-section">
+        <div class="debug-section-title">CityWalk 模拟</div>
+        <div class="citywalk-status">
+          <span class="debug-label">状态</span>
+          <span id="cw-status">已停止</span>
+        </div>
+        <div class="citywalk-speed">
+          <span class="debug-label">速度</span>
+          <span id="cw-speed-value">1.0</span>
+        </div>
+        <input type="range" id="cw-speed-slider" min="0" max="10" step="0.1" value="1.0">
+        <div class="citywalk-direction">
+          <span class="debug-label">方向</span>
+          <select id="cw-direction">
+            <option value="north">向北 ↑</option>
+            <option value="south">向南 ↓</option>
+            <option value="east">向东 →</option>
+            <option value="west">向西 ←</option>
+            <option value="random" selected>随机</option>
+          </select>
+        </div>
+        <div class="citywalk-controls">
+          <button id="cw-start-btn" class="cw-btn">开始</button>
+          <button id="cw-pause-btn" class="cw-btn" disabled>暂停</button>
+          <button id="cw-stop-btn" class="cw-btn" disabled>停止</button>
+        </div>
+      </div>
     </div>
   </div>
 

@@ -5,10 +5,13 @@ import { API } from './api.js';
 export const ChatModule = {
   appState: null,
   isProcessing: false,
+  recognition: null,
+  isListening: false,
 
   init(appState) {
     this.appState = appState;
     this.bindEvents();
+    this.initSpeechRecognition();
 
     // Listen to session changes
     appState.on('activeSessionId', () => this.renderMessages());
@@ -18,11 +21,72 @@ export const ChatModule = {
     window.ChatModule = this;
   },
 
+  initSpeechRecognition() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      console.warn('Speech recognition not supported');
+      return;
+    }
+
+    this.recognition = new SpeechRecognition();
+    this.recognition.continuous = false;
+    this.recognition.interimResults = true;
+    this.recognition.lang = 'zh-CN';
+
+    this.recognition.onstart = () => {
+      this.isListening = true;
+      document.getElementById('voice-btn').classList.add('listening');
+      document.getElementById('voice-btn').textContent = '🔴';
+    };
+
+    this.recognition.onresult = (event) => {
+      const input = document.getElementById('message-input');
+      let transcript = '';
+
+      for (let i = 0; i < event.results.length; i++) {
+        transcript += event.results[i][0].transcript;
+      }
+
+      input.value = transcript;
+      input.style.height = 'auto';
+      input.style.height = Math.min(input.scrollHeight, 100) + 'px';
+    };
+
+    this.recognition.onend = () => {
+      this.isListening = false;
+      document.getElementById('voice-btn').classList.remove('listening');
+      document.getElementById('voice-btn').textContent = '🎤';
+    };
+
+    this.recognition.onerror = (event) => {
+      console.error('Speech recognition error:', event.error);
+      this.isListening = false;
+      document.getElementById('voice-btn').classList.remove('listening');
+      document.getElementById('voice-btn').textContent = '🎤';
+    };
+  },
+
+  toggleVoiceInput() {
+    if (!this.recognition) {
+      alert('你的浏览器不支持语音输入');
+      return;
+    }
+
+    if (this.isListening) {
+      this.recognition.stop();
+    } else {
+      this.recognition.start();
+    }
+  },
+
   bindEvents() {
     const input = document.getElementById('message-input');
     const sendBtn = document.getElementById('send-btn');
+    const voiceBtn = document.getElementById('voice-btn');
 
     sendBtn.addEventListener('click', () => this.sendMessage());
+
+    voiceBtn.addEventListener('click', () => this.toggleVoiceInput());
 
     input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && !e.shiftKey) {
@@ -70,6 +134,12 @@ export const ChatModule = {
     this.renderMessages();
     this.scrollToBottom();
 
+    // 分析用户反馈并调整陪伴模式频率
+    const PassiveScanner = window.PassiveScanner;
+    if (PassiveScanner) {
+      PassiveScanner.analyzeFeedback(message);
+    }
+
     // Show loading
     this.isProcessing = true;
     const sendBtn = document.getElementById('send-btn');
@@ -105,6 +175,9 @@ export const ChatModule = {
       SessionModule.addMessage(assistantMessage);
       this.renderMessages();
       this.scrollToBottom();
+
+      // 自动播放语音
+      this.speak(response.reply);
 
     } catch (error) {
       console.error('Failed to send message:', error);
@@ -164,10 +237,13 @@ export const ChatModule = {
 
       const passiveBadge = msg.source === 'passive' ? '<span class="passive-badge">主动推送</span>' : '';
 
-      // 只有助手消息才显示喇叭按钮
+      // 喇叭按钮（仅助手消息）
       const speakerBtn = msg.role === 'assistant'
         ? `<button class="msg-speaker-btn" data-index="${index}" title="播放语音">🔊</button>`
         : '';
+
+      // 复制按钮（所有消息）
+      const copyBtn = `<button class="msg-copy-btn" data-index="${index}" title="复制">📋</button>`;
 
       return `
         <div class="message ${msg.role}">
@@ -175,6 +251,7 @@ export const ChatModule = {
             ${this.escapeHtml(msg.content)}
             <div class="message-meta">
               ${passiveBadge}
+              ${copyBtn}
               ${speakerBtn}
               <span>${time}</span>
             </div>
@@ -189,6 +266,22 @@ export const ChatModule = {
         const index = parseInt(e.target.dataset.index);
         const msg = session.messages[index];
         this.speakWithHighlight(msg.content, e.target);
+      });
+    });
+
+    // 绑定复制按钮点击事件
+    container.querySelectorAll('.msg-copy-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const index = parseInt(e.target.dataset.index);
+        const msg = session.messages[index];
+
+        navigator.clipboard.writeText(msg.content).then(() => {
+          // Show feedback
+          e.target.textContent = '✓';
+          setTimeout(() => {
+            e.target.textContent = '📋';
+          }, 1500);
+        });
       });
     });
   },

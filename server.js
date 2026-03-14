@@ -10,6 +10,7 @@ const PORT = 3001;
 // Coze API 配置（从环境变量读取）
 const TOKEN = process.env.COZE_TOKEN;
 const WORKFLOW_ID = process.env.COZE_WORKFLOW_ID || '7616752869026398250';
+const CHAT_WORKFLOW_ID = process.env.COZE_CHAT_WORKFLOW_ID || '7616956909389053993';
 
 if (!TOKEN) {
   console.error('请设置 COZE_TOKEN 环境变量');
@@ -78,8 +79,11 @@ const server = http.createServer(async (req, res) => {
       // 收集流式响应
       let resultText = '';
       let rawContent = '';
+      let responseSent = false;
 
       for await (const event of stream) {
+        if (responseSent) break;
+
         console.log('Event:', JSON.stringify(event));
 
         // 处理消息事件 - SDK 使用 Message (大写 M)
@@ -105,22 +109,81 @@ const server = http.createServer(async (req, res) => {
 
         // 处理完成
         if (event.event === 'Done') {
+          console.log('最终结果:', resultText);
+
+          if (resultText.trim()) {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ result: resultText.trim() }));
+          } else {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ result: '未获取到结果，请重试' }));
+          }
+          responseSent = true;
           break;
         }
       }
 
-      console.log('最终结果:', resultText);
+    } catch (error) {
+      console.error('代理服务器错误:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: error.message }));
+    }
+  }
+
+  // 处理 POST /api/chat (对话功能)
+  if (req.method === 'POST' && req.url === '/api/chat') {
+    try {
+      const body = await parseBody(req);
+      const { message, location } = JSON.parse(body);
+
+      if (!message || !location) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: '缺少参数' }));
+        return;
+      }
+
+      const locationStr = `(${location.lat}, ${location.lng})`;
+      console.log('收到对话请求，位置:', locationStr, '消息:', message);
+
+      // 调用 Coze 对话工作流
+      const stream = await apiClient.workflows.runs.stream({
+        workflow_id: CHAT_WORKFLOW_ID,
+        parameters: {
+          location: locationStr,
+          Content: message
+        }
+      });
+
+      // 收集流式响应
+      let resultText = '';
+
+      for await (const event of stream) {
+        console.log('Chat Event:', JSON.stringify(event));
+
+        if (event.event === 'Message' && event.data?.content) {
+          try {
+            const parsed = JSON.parse(event.data.content);
+            resultText = parsed.output || parsed.text || event.data.content;
+          } catch {
+            resultText = event.data.content;
+          }
+        }
+
+        if (event.event === 'Done') break;
+      }
+
+      console.log('对话结果:', resultText);
 
       if (resultText.trim()) {
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ result: resultText.trim() }));
+        res.end(JSON.stringify({ reply: resultText.trim() }));
       } else {
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ result: '未获取到结果，请重试' }));
+        res.end(JSON.stringify({ reply: '未获取到回复，请重试' }));
       }
 
     } catch (error) {
-      console.error('代理服务器错误:', error);
+      console.error('对话代理错误:', error);
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: error.message }));
     }
