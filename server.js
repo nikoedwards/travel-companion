@@ -7,7 +7,7 @@ import { CozeAPI } from '@coze/api';
 const PORT = 3001;
 
 // Coze API 配置
-const TOKEN = 'cztei_hGETAGqOiPeG3BhAws2GJgUCtGsnW8ZfaJHRML8pvCfKoJ6NeVvh63Wu38L4fXPTp';
+const TOKEN = 'pat_84926s9d2AbWBxbfMVwEGqvGM3iP0urjojKyaAyQUD2EkdfAVJPCtSn8vYVyketI';
 const WORKFLOW_ID = '7616752869026398250';
 
 // 创建 Coze 客户端

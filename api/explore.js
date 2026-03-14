@@ -1,7 +1,7 @@
 // api/explore.js - Vercel API route for exploring nearby
 import { CozeAPI } from '@coze/api';
 
-const TOKEN = process.env.COZE_TOKEN || 'cztei_hGETAGqOiPeG3BhAws2GJgUCtGsnW8ZfaJHRML8pvCfKoJ6NeVvh63Wu38L4fXPTp';
+const TOKEN = process.env.COZE_TOKEN || 'pat_84926s9d2AbWBxbfMVwEGqvGM3iP0urjojKyaAyQUD2EkdfAVJPCtSn8vYVyketI';
 const WORKFLOW_ID = process.env.COZE_WORKFLOW_ID || '7616752869026398250';
 
 const apiClient = new CozeAPI({
