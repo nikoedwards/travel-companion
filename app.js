@@ -294,9 +294,15 @@ function initDebugConsole(appState) {
       console.log('探索坐标:', coords);
 
       // Use relative API URL (works both locally and on Vercel)
-      const apiUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-        ? 'http://localhost:3001/api/explore'
-        : '/api/explore';
+      let apiUrl;
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        apiUrl = 'http://localhost:3001/api/explore';
+      } else if (window.location.hostname.includes('loca.lt')) {
+        // For localtunnel, use explicit API URL
+        apiUrl = 'https://fine-loops-shake.loca.lt/api/explore';
+      } else {
+        apiUrl = '/api/explore';
+      }
 
       const response = await fetch(apiUrl, {
         method: 'POST',
