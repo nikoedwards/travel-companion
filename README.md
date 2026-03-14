@@ -2,6 +2,10 @@
 
 基于 Coze API 的智能旅行助手 Web 应用。
 
+## 在线演示
+
+🌐 **在线访问**: https://travel-companion-three-alpha.vercel.app/
+
 ## 功能特性
 
 - 🗣️ AI 对话 - 与 AI 助手实时交流
